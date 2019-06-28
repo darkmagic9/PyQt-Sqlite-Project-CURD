@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtPrintSupport import *
-import sys,sqlite3,time
+import sys,sqlite3,time,pymysql
 
 import os
 
@@ -186,7 +186,7 @@ class LoginDialog(QDialog):
         self.setLayout(layout)
 
     def login(self):
-        if(self.passinput.text() == "Acet"):
+        if(self.passinput.text() == "123456"):
             self.accept()
         else:
             QMessageBox.warning(self, 'Error', 'Wrong Password')
@@ -251,14 +251,26 @@ class MainWindow(QMainWindow):
         self.tableWidget = QTableWidget()
         self.setCentralWidget(self.tableWidget)
         self.tableWidget.setAlternatingRowColors(True)
-        self.tableWidget.setColumnCount(6)
+        self.tableWidget.setColumnCount(12)
         self.tableWidget.horizontalHeader().setCascadingSectionResizes(False)
         self.tableWidget.horizontalHeader().setSortIndicatorShown(False)
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
         self.tableWidget.verticalHeader().setVisible(False)
         self.tableWidget.verticalHeader().setCascadingSectionResizes(False)
         self.tableWidget.verticalHeader().setStretchLastSection(False)
-        self.tableWidget.setHorizontalHeaderLabels(("Roll No.", "Name", "Branch", "Sem", "Mobile","Address"))
+        self.tableWidget.setHorizontalHeaderLabels(("id", 
+                                                    "create_date", 
+                                                    "create_time", 
+                                                    "create_userfullname", 
+                                                    "create_userid",
+                                                    "update_date",
+                                                    "update_time",
+                                                    "update_userfullname",
+                                                    "update_userid",
+                                                    "emp_id",
+                                                    "emp_name",
+                                                    "is_validator",
+                                                    "remark"))
 
         toolbar = QToolBar()
         toolbar.setMovable(False)
@@ -305,15 +317,17 @@ class MainWindow(QMainWindow):
         help_menu.addAction(about_action)
 
     def loaddata(self):
-        self.connection = sqlite3.connect("database.db")
-        query = "SELECT * FROM students"
-        result = self.connection.execute(query)
+        self.connection = pymysql.connect(host='128.100.117.99', user='root', passwd='namiki', database='lvp-svp')
+        self.cur = self.connection.cursor()
+        query = "SELECT * FROM operator"
+        self.cur.execute(query)
+        result = self.cur.fetchall()
         self.tableWidget.setRowCount(0)
         for row_number, row_data in enumerate(result):
             self.tableWidget.insertRow(row_number)
             for column_number, data in enumerate(row_data):
                 self.tableWidget.setItem(row_number, column_number,QTableWidgetItem(str(data)))
-        self.connection.close()
+        self.cur.close()
 
     def handlePaintRequest(self, printer):
         document = QTextDocument()
