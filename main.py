@@ -4,7 +4,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtPrintSupport import *
 import sys,sqlite3,time,pymysql
-
+import datetime
 import os
 
 class InsertDialog(QDialog):
@@ -14,74 +14,80 @@ class InsertDialog(QDialog):
         self.QBtn = QPushButton()
         self.QBtn.setText("Register")
 
-        self.setWindowTitle("Add Student")
+        self.setWindowTitle("Add Operator")
         self.setFixedWidth(300)
         self.setFixedHeight(250)
 
-        self.QBtn.clicked.connect(self.addstudent)
+        self.QBtn.clicked.connect(self.addoperator)
 
         layout = QVBoxLayout()
+
+        self.codeinput = QLineEdit()
+        self.codeinput.setPlaceholderText("Code")
+        self.codeinput.setInputMask('99999')
+        layout.addWidget(self.codeinput)
 
         self.nameinput = QLineEdit()
         self.nameinput.setPlaceholderText("Name")
         layout.addWidget(self.nameinput)
 
-        self.branchinput = QComboBox()
-        self.branchinput.addItem("Mechanical")
-        self.branchinput.addItem("Civil")
-        self.branchinput.addItem("Electrical")
-        self.branchinput.addItem("Electronics and Communication")
-        self.branchinput.addItem("Computer Science")
-        self.branchinput.addItem("Information Technology")
-        layout.addWidget(self.branchinput)
+        self.validatorinput = QComboBox()
+        self.validatorinput.addItem("N")
+        self.validatorinput.addItem("Y")
+        layout.addWidget(self.validatorinput)
 
-        self.seminput = QComboBox()
-        self.seminput.addItem("1")
-        self.seminput.addItem("2")
-        self.seminput.addItem("3")
-        self.seminput.addItem("4")
-        self.seminput.addItem("5")
-        self.seminput.addItem("6")
-        self.seminput.addItem("7")
-        self.seminput.addItem("8")
-        layout.addWidget(self.seminput)
+        # self.validatorinput = QComboBox()
+        # self.validatorinput.addItem("Mechanical")
+        # self.validatorinput.addItem("Civil")
+        # self.validatorinput.addItem("Electrical")
+        # self.validatorinput.addItem("Electronics and Communication")
+        # self.validatorinput.addItem("Computer Science")
+        # self.validatorinput.addItem("Information Technology")
+        # layout.addWidget(self.validatorinput)
 
-        self.mobileinput = QLineEdit()
-        self.mobileinput.setPlaceholderText("Mobile")
-        self.mobileinput.setInputMask('99999 99999')
-        layout.addWidget(self.mobileinput)
+        # self.seminput = QComboBox()
+        # self.seminput.addItem("1")
+        # self.seminput.addItem("2")
+        # self.seminput.addItem("3")
+        # self.seminput.addItem("4")
+        # self.seminput.addItem("5")
+        # self.seminput.addItem("6")
+        # self.seminput.addItem("7")
+        # self.seminput.addItem("8")
+        # layout.addWidget(self.seminput)
 
-        self.addressinput = QLineEdit()
-        self.addressinput.setPlaceholderText("Address")
-        layout.addWidget(self.addressinput)
+        # self.addressinput = QLineEdit()
+        # self.addressinput.setPlaceholderText("Address")
+        # layout.addWidget(self.addressinput)
 
         layout.addWidget(self.QBtn)
         self.setLayout(layout)
 
-    def addstudent(self):
+    def addoperator(self):
 
         name = ""
-        branch = ""
-        sem = -1
-        mobile = -1
-        address = ""
+        validator = ""
+        date = str(datetime.datetime.now().strftime("%Y%m%d"))
+        code = -1
+        time = str(datetime.datetime.now().strftime("%H%M%S"))
+        user = "pydemo"
+        userid = "11"
 
         name = self.nameinput.text()
-        branch = self.branchinput.itemText(self.branchinput.currentIndex())
-        sem = self.seminput.itemText(self.seminput.currentIndex())
-        mobile = self.mobileinput.text()
-        address = self.addressinput.text()
+        validator = self.validatorinput.itemText(self.validatorinput.currentIndex())
+        code = self.codeinput.text()
         try:
-            self.conn = sqlite3.connect("database.db")
+            self.conn = pymysql.connect(host='128.100.117.99', user='root', passwd='namiki', database='lvp-svp')
             self.c = self.conn.cursor()
-            self.c.execute("INSERT INTO students (name,branch,sem,Mobile,address) VALUES (?,?,?,?,?)",(name,branch,sem,mobile,address))
+            self.c.execute("INSERT INTO operator (create_date,create_time,create_userfullname,create_userid,update_date,update_time,update_userfullname,update_userid,emp_id,emp_name,is_validator) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",(date,time,user,userid,date,time,user,userid,code,name,validator))
             self.conn.commit()
             self.c.close()
             self.conn.close()
-            QMessageBox.information(QMessageBox(),'Successful','Student is added successfully to the database.')
+            QMessageBox.information(QMessageBox(),'Successful','Operator is added successfully to the database.')
             self.close()
+            
         except Exception:
-            QMessageBox.warning(QMessageBox(), 'Error', 'Could not add student to the database.')
+            QMessageBox.warning(QMessageBox(), 'Error', 'Could not add operator to the database.')
 
 class SearchDialog(QDialog):
     def __init__(self, *args, **kwargs):
@@ -93,33 +99,33 @@ class SearchDialog(QDialog):
         self.setWindowTitle("Search user")
         self.setFixedWidth(300)
         self.setFixedHeight(100)
-        self.QBtn.clicked.connect(self.searchstudent)
+        self.QBtn.clicked.connect(self.searchoperator)
         layout = QVBoxLayout()
 
         self.searchinput = QLineEdit()
         self.onlyInt = QIntValidator()
         self.searchinput.setValidator(self.onlyInt)
-        self.searchinput.setPlaceholderText("Roll No.")
+        self.searchinput.setPlaceholderText("emp_id No.")
         layout.addWidget(self.searchinput)
         layout.addWidget(self.QBtn)
         self.setLayout(layout)
 
-    def searchstudent(self):
+    def searchoperator(self):
 
         searchrol = ""
         searchrol = self.searchinput.text()
         try:
-            self.conn = sqlite3.connect("database.db")
+            self.conn = pymysql.connect(host='128.100.117.99', user='root', passwd='namiki', database='lvp-svp')
             self.c = self.conn.cursor()
-            result = self.c.execute("SELECT * from students WHERE roll="+str(searchrol))
-            row = result.fetchone()
-            serachresult = "Rollno : "+str(row[0])+'\n'+"Name : "+str(row[1])+'\n'+"Branch : "+str(row[2])+'\n'+"Sem : "+str(row[3])+'\n'+"Address : "+str(row[4])
+            self.c.execute("SELECT * from operator WHERE emp_id="+str(searchrol))
+            row = self.c.fetchone()
+            serachresult = "emp_id : "+str(row[9])+'\n'+"Name : "+str(row[10])+'\n'+"validator : "+str(row[11])
             QMessageBox.information(QMessageBox(), 'Successful', serachresult)
             self.conn.commit()
             self.c.close()
             self.conn.close()
         except Exception:
-            QMessageBox.warning(QMessageBox(), 'Error', 'Could not Find student from the database.')
+            QMessageBox.warning(QMessageBox(), 'Error', 'Could not Find operator from the database.')
 
 class DeleteDialog(QDialog):
     def __init__(self, *args, **kwargs):
@@ -128,35 +134,35 @@ class DeleteDialog(QDialog):
         self.QBtn = QPushButton()
         self.QBtn.setText("Delete")
 
-        self.setWindowTitle("Delete Student")
+        self.setWindowTitle("Delete Operator")
         self.setFixedWidth(300)
         self.setFixedHeight(100)
-        self.QBtn.clicked.connect(self.deletestudent)
+        self.QBtn.clicked.connect(self.deleteoperator)
         layout = QVBoxLayout()
 
         self.deleteinput = QLineEdit()
         self.onlyInt = QIntValidator()
         self.deleteinput.setValidator(self.onlyInt)
-        self.deleteinput.setPlaceholderText("Roll No.")
+        self.deleteinput.setPlaceholderText("emp_id No.")
         layout.addWidget(self.deleteinput)
         layout.addWidget(self.QBtn)
         self.setLayout(layout)
 
-    def deletestudent(self):
+    def deleteoperator(self):
 
         delrol = ""
         delrol = self.deleteinput.text()
         try:
-            self.conn = sqlite3.connect("database.db")
+            self.conn = pymysql.connect(host='128.100.117.99', user='root', passwd='namiki', database='lvp-svp')
             self.c = self.conn.cursor()
-            self.c.execute("DELETE from students WHERE roll="+str(delrol))
+            self.c.execute("DELETE from operator WHERE emp_id="+str(delrol))
             self.conn.commit()
             self.c.close()
             self.conn.close()
             QMessageBox.information(QMessageBox(),'Successful','Deleted From Table Successful')
             self.close()
         except Exception:
-            QMessageBox.warning(QMessageBox(), 'Error', 'Could not Delete student from the database.')
+            QMessageBox.warning(QMessageBox(), 'Error', 'Could not Delete operator from the database.')
 
 class LoginDialog(QDialog):
     def __init__(self, *args, **kwargs):
@@ -236,15 +242,15 @@ class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
 
-        self.conn = sqlite3.connect("database.db")
-        self.c = self.conn.cursor()
-        self.c.execute("CREATE TABLE IF NOT EXISTS students(roll INTEGER PRIMARY KEY AUTOINCREMENT ,name TEXT,branch TEXT,sem INTEGER,mobile INTEGER,address TEXT)")
-        self.c.close()
+        # self.conn = pymysql.connect(host='128.100.117.99', user='root', passwd='namiki', database='lvp-svp')
+        # self.c = self.conn.cursor()
+        # self.c.execute("CREATE TABLE IF NOT EXISTS operator(emp_id INTEGER PRIMARY KEY AUTOINCREMENT ,name TEXT,validator TEXT,sem INTEGER,code INTEGER,address TEXT)")
+        # self.c.close()
 
         file_menu = self.menuBar().addMenu("&File")
 
         help_menu = self.menuBar().addMenu("&About")
-        self.setWindowTitle("Student Management CRUD")
+        self.setWindowTitle("Operator Management CRUD")
 
         self.setMinimumSize(800, 600)
 
@@ -279,9 +285,9 @@ class MainWindow(QMainWindow):
         statusbar = QStatusBar()
         self.setStatusBar(statusbar)
 
-        btn_ac_adduser = QAction(QIcon("icon/add.png"), "Add Student", self)
+        btn_ac_adduser = QAction(QIcon("icon/add.png"), "Add Operator", self)
         btn_ac_adduser.triggered.connect(self.insert)
-        btn_ac_adduser.setStatusTip("Add Student")
+        btn_ac_adduser.setStatusTip("Add Operator")
         toolbar.addAction(btn_ac_adduser)
 
         btn_ac_refresh = QAction(QIcon("icon/refresh.png"),"Refresh",self)
@@ -299,11 +305,11 @@ class MainWindow(QMainWindow):
         btn_ac_delete.setStatusTip("Delete User")
         toolbar.addAction(btn_ac_delete)
 
-        adduser_action = QAction(QIcon("icon/add.png"),"Insert Student", self)
+        adduser_action = QAction(QIcon("icon/add.png"),"Insert Operator", self)
         adduser_action.triggered.connect(self.insert)
         file_menu.addAction(adduser_action)
 
-        searchuser_action = QAction(QIcon("icon/search.png"), "Search Student", self)
+        searchuser_action = QAction(QIcon("icon/search.png"), "Search Operator", self)
         searchuser_action.triggered.connect(self.search)
         file_menu.addAction(searchuser_action)
 
@@ -328,6 +334,7 @@ class MainWindow(QMainWindow):
             for column_number, data in enumerate(row_data):
                 self.tableWidget.setItem(row_number, column_number,QTableWidgetItem(str(data)))
         self.cur.close()
+        self.connection.close()
 
     def handlePaintRequest(self, printer):
         document = QTextDocument()
